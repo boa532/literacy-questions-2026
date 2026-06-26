@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문항 3 · 이름표 붙이기 실습</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:#f0f4ff;min-height:100vh;color:#222}
+
+/* ── Header ── */
+header{background:#1a73e8;color:white;padding:13px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.mod-tag{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;white-space:nowrap}
+header h1{font-size:.98rem;font-weight:700;flex:1}
+.prog-bar{width:140px;background:rgba(255,255,255,.3);border-radius:99px;height:7px;overflow:hidden}
+.prog-fill{background:white;height:100%;border-radius:99px;transition:width .5s ease}
+.step-lbl{font-size:.8rem;font-weight:700;white-space:nowrap}
+
+/* ── Layout ── */
+main{max-width:860px;margin:0 auto;padding:26px 14px 80px}
+.screen{display:none}
+.screen.active{display:block}
+.card{background:white;border-radius:18px;padding:26px;margin-bottom:18px;box-shadow:0 2px 14px rgba(0,0,0,.07)}
+
+/* ── Stage badge / title ── */
+.stage-badge{display:inline-flex;align-items:center;background:#e8f0fe;color:#1a73e8;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;margin-bottom:10px}
+.q-title{font-size:1.2rem;font-weight:700;margin-bottom:14px;line-height:1.4}
+.scenario-box{background:#f0f4ff;border-left:4px solid #1a73e8;border-radius:0 10px 10px 0;padding:13px 16px;margin-bottom:18px;font-size:.9rem;line-height:1.7;color:#333}
+
+/* ── Intro scene ── */
+.intro-title{font-size:1.7rem;font-weight:700;color:#1a73e8;text-align:center;margin-bottom:7px}
+.intro-sub{font-size:.9rem;color:#666;text-align:center;margin-bottom:22px}
+.intro-scene{background:#f8f9ff;border:2px solid #d0d8f0;border-radius:16px;padding:20px;margin-bottom:22px}
+.scene-row{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.scene-char{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:54px}
+.char-emoji{font-size:2.1rem}
+.char-name{font-size:.7rem;font-weight:700;color:#555;text-align:center}
+.bubble{background:white;border:2px solid #1a73e8;border-radius:12px;padding:11px 14px;font-size:.85rem;line-height:1.65;color:#333;flex:1;position:relative}
+.bubble::before{content:'';position:absolute;left:-10px;top:14px;border:5px solid transparent;border-right-color:#1a73e8}
+.bubble.green{border-color:#34a853}
+.bubble.green::before{left:auto;right:-10px;border-right-color:transparent;border-left-color:#34a853}
+.scene-divider{border:none;border-top:1.5px dashed #c0cce0;margin:14px 0}
+.module-intro{text-align:center;font-size:.88rem;color:#444;line-height:1.75;background:#e8f0fe;border-radius:10px;padding:12px 16px}
+
+/* ── Stage 1 visual ── */
+.s1-visual{display:flex;flex-direction:column;align-items:center;gap:10px;background:#f0f4ff;border-radius:14px;padding:20px;margin-bottom:18px}
+.cam-label{font-size:.78rem;font-weight:700;color:#1a73e8;display:flex;align-items:center;gap:6px}
+.scan-dot{width:8px;height:8px;border-radius:50%;background:#1a73e8;animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.scan-arrow{font-size:1.1rem;color:#1a73e8;font-weight:700}
+.food-tray{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#795548;padding:8px;border-radius:12px;width:170px}
+.fp{border-radius:8px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.fp .fe{font-size:2rem}
+.fp .fn{font-size:.68rem;font-weight:700;color:#333}
+.tray-img{width:60px;height:60px;object-fit:cover;border-radius:8px;display:block;}
+
+/* ── MCQ ── */
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{background:#f8f9ff;border:2px solid #d8e0f0;border-radius:10px;padding:13px 16px;font-size:.9rem;line-height:1.5;cursor:pointer;transition:all .15s;font-family:inherit;text-align:left;width:100%}
+.opt:hover{background:#eef3ff;border-color:#1a73e8}
+.opt.selected{background:#e8f0fe;border-color:#1a73e8;color:#174ea6;font-weight:600}
+.opt.correct{background:#e6f4ea;border-color:#34a853;color:#137333;font-weight:600}
+.opt.wrong{background:#fce8e6;border-color:#ea4335;color:#a50e0e}
+.opt:disabled{cursor:not-allowed;opacity:.7}
+
+/* ── Stage 3: photo labeling ── */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:14px}
+.photo-card{background:#f8f9ff;border:2px dashed #c0cce0;border-radius:12px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;min-height:115px;cursor:pointer;transition:border-color .15s,background .15s}
+.photo-card:hover{border-color:#1a73e8;background:#eef3ff}
+.food-img{width:54px;height:54px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;overflow:hidden}
+.slot{background:white;border:1.5px dashed #aab8d0;border-radius:6px;padding:5px 10px;font-size:.75rem;min-width:90px;min-height:30px;text-align:center;color:#bbb;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.slot.filled{border-style:solid;border-color:#1a73e8;color:#174ea6;font-weight:700;background:#e8f0fe}
+.slot.correct{border-color:#34a853;background:#e6f4ea;color:#137333;border-style:solid}
+.slot.wrong{border-color:#ea4335;background:#fce8e6;color:#a50e0e;border-style:solid}
+.label-pool{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;padding:16px;background:#f0f4ff;border-radius:12px;border:2px dashed #b8c8e8;margin-bottom:6px}
+.pool-title{width:100%;text-align:center;font-size:.78rem;color:#555;margin-bottom:4px;font-weight:700}
+.chip{background:#1a73e8;color:white;padding:10px 20px;border-radius:99px;font-size:.88rem;font-weight:700;cursor:pointer;user-select:none;transition:all .15s;display:inline-block}
+.chip:hover{background:#1557b0}
+.chip.active{background:#174ea6;outline:3px solid #fdd835;outline-offset:2px}
+
+/* ── Stage 4: folder UI ── */
+.folder-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0 18px}
+.folder{background:#fffbf0;border:2px solid #fdd835;border-radius:14px;padding:13px 9px;text-align:center}
+.folder.err-folder{border-color:#ea4335;background:#fff8f7}
+.folder-name{font-size:.78rem;font-weight:700;margin-bottom:4px;color:#5d4037}
+.folder-emoji{font-size:1.5rem;margin-bottom:7px}
+.bundle-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:8px}
+.bun{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.75rem;border:1px solid rgba(0,0,0,.06);transition:background .18s}
+.bun.empty-bun{background:#eeeeee;border:1px dashed #ccc}
+.folder-cnt{font-size:.92rem;font-weight:700;color:#5d4037;margin-bottom:8px}
+.folder.err-folder .folder-cnt{color:#ea4335}
+.ctrl-row{display:flex;gap:6px;justify-content:center}
+.ctrl{width:34px;height:34px;border:2px solid #fdd835;background:white;border-radius:7px;font-size:1.1rem;font-weight:700;color:#5d4037;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;transition:background .12s}
+.ctrl:hover:not(:disabled){background:#fdd835}
+.ctrl:disabled{opacity:.3;cursor:not-allowed}
+.train-btn{display:block;width:100%;padding:14px;background:#1a73e8;color:white;border:none;border-radius:12px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;margin-top:4px}
+.train-btn:hover:not(:disabled){background:#1557b0}
+.train-btn:disabled{background:#b0c8f0;cursor:not-allowed}
+
+/* ── Train overlay ── */
+#trainOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center}
+#trainOverlay.show{display:flex}
+.t-modal{background:white;border-radius:20px;padding:34px;text-align:center;max-width:320px;width:90%}
+.t-modal h2{font-size:1.1rem;margin-bottom:18px}
+.t-bar-bg{background:#e0e0e0;border-radius:99px;height:13px;overflow:hidden;margin-bottom:9px}
+.t-bar{height:100%;background:#1a73e8;border-radius:99px;width:0;transition:width .05s linear}
+.t-pct{font-size:1.4rem;font-weight:700;color:#1a73e8;margin-bottom:3px}
+.t-msg{font-size:.82rem;color:#666}
+.acc-result{display:none;margin-top:14px}
+.acc-result.show{display:block}
+
+/* ── Stage 5 ── */
+.ai-res{background:#fff3e0;border:2px solid #ffb74d;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:13px;margin-bottom:14px}
+.ai-res-icon{font-size:1.9rem}
+.ai-res-text{font-size:.88rem;line-height:1.6}
+.ai-res-text strong{color:#e65100}
+.folder-simple{background:#fffbf0;border:2px solid #ffb74d;border-radius:13px;padding:16px 18px;margin-bottom:16px}
+.folder-simple h3{font-size:.88rem;font-weight:700;color:#5d4037;margin-bottom:12px}
+.photo-label-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px}
+.pl-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+.pl-img{width:68px;height:68px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1.5px solid rgba(0,0,0,.1)}
+.pl-label{font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:99px;line-height:1.4;display:block}
+.pl-label.ok{background:#e6f4ea;color:#137333;border:1px solid #81c995}
+.pl-label.err{background:#fff3e0;color:#e65100;border:1px solid #ffb74d}
+.err-summary{background:#fce8e6;border-radius:8px;padding:9px 12px;font-size:.82rem;color:#a50e0e;font-weight:700;text-align:center;border:1.5px solid #ef9a9a}
+
+/* ── Feedback ── */
+.fb{display:none;padding:13px 15px;border-radius:10px;margin-top:13px;font-size:.88rem;line-height:1.6}
+.fb.show{display:block}
+.fb.ok{background:#e6f4ea;border:2px solid #81c995;color:#137333}
+.fb.fail{background:#fce8e6;border:2px solid #ef9a9a;color:#a50e0e}
+
+/* ── Buttons ── */
+.btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.btn{padding:11px 24px;border-radius:10px;font-size:.92rem;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s}
+.btn-p{background:#1a73e8;color:white}
+.btn-p:hover{background:#1557b0}
+.btn-p:disabled{background:#b0c8f0;cursor:not-allowed}
+
+/* ── Final ── */
+.final-card{background:white;border-radius:20px;padding:38px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.final-card .trophy{font-size:3.2rem;margin-bottom:14px}
+.final-card h2{font-size:1.4rem;font-weight:700;margin-bottom:7px}
+.score-big{font-size:3rem;font-weight:700;color:#1a73e8;margin-bottom:3px}
+.score-max{font-size:.95rem;color:#999;margin-bottom:22px}
+.breakdown{background:#f8f9ff;border-radius:12px;padding:16px;text-align:left}
+.breakdown h4{font-size:.8rem;color:#666;margin-bottom:10px}
+.bdr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:.86rem;border-bottom:1px solid #e8ecf4}
+.bdr:last-child{border:none}
+.bdr-s{font-weight:700;color:#1a73e8}
+
+.sec-label{font-size:.75rem;font-weight:700;color:#1a73e8;margin:18px 0 8px;display:flex;align-items:center;gap:7px}
+.sec-label::before{content:"";display:inline-block;width:4px;height:14px;background:#1a73e8;border-radius:2px;flex-shrink:0}
+.sec-label::after{content:"";flex:1;height:1.5px;background:#e8ecf4;margin-left:4px}
+
+@media(max-width:600px){
+  .photo-grid{grid-template-columns:repeat(2,1fr)}
+  .folder-row{grid-template-columns:repeat(2,1fr)}
+  .scene-row{flex-direction:column}
+  header h1{font-size:.85rem}
+  .prog-bar{width:90px}
+}
+
+</style>
+</head>
+<body>
+<header>
+  <span class="mod-tag">모듈 2</span>
+  <h1>AI 급식 스캐너</h1>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="prog-bar"><div class="prog-fill" style="width:100%"></div></div>
+    <span class="step-lbl">문항 3</span>
+  </div>
+</header>
+<main>
+<div class="screen active" id="sc-3">
+  <div class="card">
+    <div class="stage-badge">3단계 · A2-1 · 기능형</div>
+    <div class="q-title">이름표 붙이기 실습</div>
+    <div class="sec-label">1) 문제 설명</div>
+    <div class="scenario-box">
+      AI가 음식 사진을 보고 어떤 음식인지 알려면, 사진마다 <strong>이름표(라벨)</strong>를 붙여서 학습시켜야 합니다.<br>
+      아래 6장의 사진에 알맞은 이름표를 붙여 볼까요?<br>
+      <strong>① 이름표를 클릭</strong>하여 선택한 뒤, <strong>② 사진을 클릭</strong>하면 이름표가 붙습니다.
+    </div>
+    <div class="sec-label">2) 기능 환경</div>
+    <div class="photo-grid" id="photoGrid"></div>
+    <div class="label-pool">
+      <div class="pool-title">🏷️ 이름표 모음 — 이름표 클릭 후 사진 클릭!</div>
+      <div id="chipPool" style="display:flex;flex-wrap:wrap;gap:9px;justify-content:center"></div>
+    </div>
+    <div class="fb" id="s3fb"></div>
+    <div class="btn-row">
+      <button class="btn btn-p" id="s3sub" onclick="submitS3()">제출하기</button>
+      <button class="btn btn-p" id="s3next" style="display:none" onclick="showDone()">다음 →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ 4단계 ══════════════ -->
+</main>
+<script>
+const REAL_IMAGES = {
+  spinachA: "images/spinachA.png",
+  spinachB: "images/spinachB.png",
+  kimchiWhite: "images/kimchiWhite.png",
+  kimchiSteel: "images/kimchiSteel.png",
+  doenjang: "images/doenjang.png",
+  mandarin: "images/mandarin.png",
+};
+/* ══════════════════════════════════════════════
+   이미지 경로 설정
+   ※ 이미지 파일을 reference 폴더에 넣고 파일명을 맞추세요.
+   ══════════════════════════════════════════════ */
+
+/* ── 4단계: 폴더 데이터 조절 ── */
+function initS4(){ renderFolders(); }
+
+function renderFolders(){
+  const imgSrcMap = {
+    spinachA:    REAL_IMAGES.spinachA,
+    kimchiWhite: REAL_IMAGES.kimchiWhite,
+    seaweed:     REAL_IMAGES.seaweed[0],
+    mandarin:    REAL_IMAGES.mandarin,
+  };
+  const row = document.getElementById('folderRow');
+  row.innerHTML = '';
+  S4.folders.forEach((f,fi)=>{
+    const isLow = (fi===2 && f.count<800);
+    const div = document.createElement('div');
+    div.className = 'folder' + (isLow ? ' err-folder' : '');
+    const filled = Math.min(10, Math.floor(f.count/100));
+    const src = imgSrcMap[f.imgKey] || '';
+    let bundles = '';
+    for(let i=0;i<10;i++){
+      bundles += i<filled
+        ? `<div class="bun" style="overflow:hidden;padding:0;"><img src="${src}" style="width:100%;height:100%;object-fit:cover;display:block;border-radius:3px;"></div>`
+        : `<div class="bun empty-bun"></div>`;
+    }
+    div.innerHTML = `
+      <div class="folder-name">${f.name}</div>
+      <div class="bundle-grid">${bundles}</div>
+      <div class="folder-cnt">${f.count}장</div>
+      <div class="ctrl-row">
+        <button class="ctrl" onclick="adjFolder(${fi},-100)" ${f.count<=0?'disabled':''}>−</button>
+        <button class="ctrl" onclick="adjFolder(${fi},+100)" ${f.count>=1000?'disabled':''}>+</button>
+      </div>`;
+    row.appendChild(div);
+  });
+}
+
+function adjFolder(fi, delta){
+  S4.folders[fi].count = Math.max(0, Math.min(1000, S4.folders[fi].count+delta));
+  renderFolders();
+}
+
+function startTrain(){
+  document.getElementById('trainBtn').disabled = true;
+  const overlay = document.getElementById('trainOverlay');
+  overlay.classList.add('show');
+  const bar=document.getElementById('tBar'), pct=document.getElementById('tPct'), msg=document.getElementById('tMsg');
+  const msgs=['데이터를 분석하고 있어요','패턴을 학습하고 있어요','모델을 최적화하고 있어요','테스트하고 있어요'];
+  let progress = 0;
+  const iv = setInterval(()=>{
+    progress += 2;
+    bar.style.width = progress+'%';
+    pct.textContent = progress+'%';
+    msg.textContent = msgs[Math.floor(progress/26)%msgs.length];
+    if(progress>=100){
+      clearInterval(iv);
+      setTimeout(()=>{
+        overlay.classList.remove('show');
+        showTrainResult();
+        document.getElementById('trainBtn').disabled = false;
+        S4.trained = true;
+        document.getElementById('s4next').disabled = false;
+      }, 400);
+    }
+  }, 40);
+}
+
+function showTrainResult(){
+  const seaweed = S4.folders[2].count;
+  const balanced = seaweed>=800;
+  scores.s4 = balanced ? 2 : (S4.trained ? 1 : 0);
+  const res = document.getElementById('accResult');
+  res.classList.add('show');
+  const fb = document.getElementById('s4fb');
+  if(balanced){
+    fb.className = 'fb ok show';
+    fb.innerHTML = `✅ 잘 했습니다! 미역줄기볶음 사진을 ${seaweed}장으로 늘렸더니 AI가 훨씬 잘 구별하게 됐습니다. 학습 데이터가 <strong>균형 있게</strong> 갖춰져야 AI가 정확하게 구별할 수 있습니다.`;
+  } else {
+    fb.className = 'fb fail show';
+    fb.innerHTML = `미역줄기볶음 사진이 ${seaweed}장으로 다른 음식들(1000장)에 비해 너무 적습니다. <strong>800장 이상</strong>으로 늘린 뒤 다시 학습시켜 보세요.`;
+  }
+}
+/* ── 최종 결과 ── */
+function showFinal(){
+  const total = scores.s1+scores.s2+scores.s3+scores.s4;
+  document.getElementById('finalScore').textContent = total;
+  document.getElementById('b1').textContent = scores.s1+'/1';
+  document.getElementById('b2').textContent = scores.s2+'/1';
+  document.getElementById('b3').textContent = scores.s3+'/6';
+  
+  document.getElementById('b4').textContent = scores.s4+'/2';
+
+  document.getElementById('trophy').textContent = total>=9 ? '🏆' : total>=6 ? '🥈' : '🌱';
+}
+
+/* ── 도입부 이미지 초기화 ── */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const el = document.getElementById('introImg');
+  if(REAL_IMAGES.introIllust){
+    el.src = REAL_IMAGES.introIllust;
+    el.style.display = 'block';
+    el.onerror = ()=>{ el.style.display='none'; };
+  }
+});
+function showDone(){var b=document.getElementById('s3next');b.textContent='✅ 완료!';b.style.display='inline-block';b.disabled=true;}
+window.addEventListener('DOMContentLoaded',function(){initS3();});
+</script>
+</body>
+</html>

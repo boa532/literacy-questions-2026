@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문항 5 · AI 오류의 여러 원인</title>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','맑은 고딕',sans-serif;background:#f0f4ff;min-height:100vh;color:#222}
+header{background:#1a73e8;color:white;padding:13px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.mod-tag{background:rgba(255,255,255,.22);padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;white-space:nowrap}
+header h1{font-size:.98rem;font-weight:700;flex:1}
+.prog-bar{width:120px;background:rgba(255,255,255,.3);border-radius:99px;height:7px;overflow:hidden}
+.prog-fill{background:white;height:100%;border-radius:99px;transition:width .5s ease}
+.step-lbl{font-size:.8rem;font-weight:700;white-space:nowrap}
+main{max-width:760px;margin:0 auto;padding:24px 14px 80px}
+.screen{display:none}.screen.active{display:block}
+.card{background:white;border-radius:18px;padding:24px;margin-bottom:16px;box-shadow:0 2px 14px rgba(0,0,0,.07)}
+.stage-badge{display:inline-flex;align-items:center;background:#e8f0fe;color:#1a73e8;padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:700;margin-bottom:10px}
+.q-title{font-size:1.08rem;font-weight:700;margin-bottom:13px;line-height:1.5}
+.scenario-box{background:#f0f4ff;border-left:4px solid #1a73e8;border-radius:0 10px 10px 0;padding:12px 15px;margin-bottom:16px;font-size:.88rem;line-height:1.85;color:#333}
+/* 선다형 */
+.opts{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.opt{background:#f8f9ff;border:2px solid #d8e0f0;border-radius:10px;padding:14px 16px;font-size:.92rem;line-height:1.5;cursor:pointer;transition:all .15s;font-family:inherit;text-align:left;width:100%;font-weight:500}
+.opt:hover{background:#eef3ff;border-color:#1a73e8}
+.opt.correct{background:#e6f4ea;border-color:#34a853;color:#137333;font-weight:700}
+.opt.wrong{background:#fce8e6;border-color:#ea4335;color:#a50e0e}
+/* 피드백 */
+.fb{display:none;padding:12px 14px;border-radius:10px;margin-top:12px;font-size:.88rem;line-height:1.6}
+.fb.show{display:block}
+.fb.ok{background:#e6f4ea;border:2px solid #81c995;color:#137333}
+.fb.fail{background:#fce8e6;border:2px solid #ef9a9a;color:#a50e0e}
+/* 버튼 */
+.btn-row{display:flex;justify-content:flex-end;margin-top:16px}
+.btn{padding:12px 28px;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;border:none;font-family:inherit}
+.btn-p{background:#1a73e8;color:white}.btn-p:hover{background:#1557b0}
+.btn-p:disabled{background:#b0c8f0;cursor:not-allowed}
+.action-row{display:flex;gap:8px;margin-top:12px}
+.act-btn{flex:1;padding:12px;border:none;border-radius:9px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit}
+.act-confirm{background:#1a73e8;color:white}.act-confirm:hover{background:#1557b0}
+.act-retry{background:#f0f4ff;color:#1a73e8;border:2px solid #b8d0f8;display:none}.act-retry:hover{background:#e8f0fe}
+/* 문항 5 사진 3장 */
+.photo3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.p3card{border-radius:12px;padding:18px 10px;text-align:center;border:2px solid}
+.p3card.ok{background:#e6f4ea;border-color:#81c995}
+.p3card.err{background:#fff3e0;border-color:#ffb74d}
+.p3icon{font-size:3.2rem;display:block;margin-bottom:8px}
+.p3name{font-size:.75rem;font-weight:700;margin-bottom:6px}
+.p3card.ok .p3name{color:#137333}
+.p3card.err .p3name{color:#e65100}
+.p3desc{font-size:.7rem;color:#555;line-height:1.4;margin-bottom:8px}
+.p3result{font-size:.7rem;font-weight:700;padding:5px 8px;border-radius:6px;display:inline-block}
+.p3card.ok .p3result{background:#c8e6c9;color:#1b5e20}
+.p3card.err .p3result{background:#ffe0b2;color:#bf360c}
+/* 문항 5 체크리스트 */
+.cause-list{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.cause-item{display:flex;align-items:flex-start;gap:11px;background:#f8f9ff;border:2px solid #d8e0f0;border-radius:10px;padding:13px 14px;cursor:pointer;transition:all .15s;user-select:none}
+.cause-item:hover{border-color:#1a73e8;background:#eef3ff}
+.cause-item.checked{border-color:#1a73e8;background:#e8f0fe}
+.cause-item.r-correct{border-color:#34a853!important;background:#e6f4ea!important}
+.cause-item.r-missed{border-color:#ea4335!important;background:#fce8e6!important}
+.cause-item.r-over{border-color:#ff9800!important;background:#fff3e0!important}
+.ck{width:22px;height:22px;border:2px solid #b0bcd0;border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.82rem;margin-top:1px;transition:all .15s}
+.cause-item.checked .ck{background:#1a73e8;border-color:#1a73e8;color:white}
+.cause-text{font-size:.9rem;line-height:1.6;color:#333}
+/* 문항 6 사진 분류 */
+.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
+.ph-card{border-radius:12px;border:2.5px solid #d8e0f0;background:#f8f9ff;padding:16px 10px;text-align:center;transition:all .15s}
+.ph-card.r-ok{border-color:#34a853!important;background:#e6f4ea!important}
+.ph-card.r-del{border-color:#ea4335!important;background:#fce8e6!important}
+.ph-card.r-wrong{border-color:#ff9800!important;background:#fff3e0!important}
+.ph-icon{font-size:2.8rem;display:block;margin-bottom:6px}
+.ph-num{font-size:.65rem;font-weight:700;color:#9ca3af;margin-bottom:3px}
+.ph-desc{font-size:.78rem;color:#444;line-height:1.45;margin-bottom:9px;min-height:34px}
+.ph-btns{display:flex;gap:6px}
+.ph-btn{flex:1;padding:9px 2px;border-radius:8px;font-size:.8rem;font-weight:700;cursor:pointer;border:1.5px solid;font-family:inherit;transition:all .12s}
+.ph-btn.ok-b{background:#e6f4ea;border-color:#81c995;color:#137333}
+.ph-btn.del-b{background:#fce8e6;border-color:#ef9a9a;color:#c62828}
+.ph-btn.act-ok{background:#34a853;color:white;border-color:#34a853}
+.ph-btn.act-del{background:#ea4335;color:white;border-color:#ea4335}
+.ph-btn:disabled{cursor:default;opacity:.7}
+.ph-tag{font-size:.65rem;font-weight:700;margin-top:6px;padding:2px 7px;border-radius:4px;display:none}
+.ph-tag.show{display:inline-block}
+.ph-tag.t-ok{background:#c8e6c9;color:#1b5e20}
+.ph-tag.t-del{background:#ffcdd2;color:#b71c1c}
+/* 결과 */
+.final-wrap{text-align:center;padding:10px 0 20px}
+.final-trophy{font-size:3.2rem;margin-bottom:12px}
+.final-score{font-size:3rem;font-weight:700;color:#1a73e8;margin-bottom:2px}
+.final-max{font-size:.9rem;color:#999;margin-bottom:22px}
+.breakdown{background:#f8f9ff;border-radius:14px;padding:18px}
+.bdr{display:flex;justify-content:space-between;padding:8px 0;font-size:.88rem;border-bottom:1px solid #e8ecf4}
+.bdr:last-child{border:none}
+.bdr-s{font-weight:700;color:#1a73e8}
+@media(max-width:600px){
+  .photo3,.photo-grid{grid-template-columns:1fr}
+  header h1{font-size:.85rem}
+  .prog-bar{width:80px}
+}
+
+</style>
+</head>
+<body>
+<header>
+  <span class="mod-tag">모듈 2</span>
+  <h1>AI 잔반 확인 프로그램</h1>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="prog-bar"><div class="prog-fill" style="width:100%"></div></div>
+    <span class="step-lbl">문항 5</span>
+  </div>
+</header>
+<main>
+<div class="screen active" id="sc-5">
+  <div class="card">
+    <div class="stage-badge">문항 5 · A1-3 · 기능형</div>
+    <div class="q-title">AI가 사진 ②③에서 틀린 이유가 될 수 있는 것은 무엇입니까?</div>
+    <div class="scenario-box">
+      지수는 문항 4에서 미역줄기볶음 사진을 1000장으로 늘려 다시 학습시켰습니다.<br>
+      그런데 이번에는 사진 상태가 달라졌을 때 AI가 또 틀렸습니다.<br>
+      사진 ①은 맞혔지만 사진 ②③에서는 틀렸습니다.<br>
+      <strong>틀린 이유가 될 수 있는 것을 모두 골라봅시다.</strong>
+    </div>
+    <div class="photo3">
+      <div class="p3card ok">
+        <span class="p3icon">🌿</span>
+        <div class="p3name">사진 ①</div>
+        <div class="p3desc">학습할 때 사용한 사진과 비슷한 밝기와 각도</div>
+        <div class="p3result">✅ 미역줄기볶음</div>
+      </div>
+      <div class="p3card err">
+        <span class="p3icon">🌫️</span>
+        <div class="p3name">사진 ②</div>
+        <div class="p3desc">색이 흐릿하게 보임</div>
+        <div class="p3result">⚠️ 시금치나물이라고 함</div>
+      </div>
+      <div class="p3card err">
+        <span class="p3icon">🔍</span>
+        <div class="p3name">사진 ③</div>
+        <div class="p3desc">음식이 아주 작게 보임</div>
+        <div class="p3result">⚠️ 쌀밥이라고 함</div>
+      </div>
+    </div>
+    <div style="font-size:.82rem;color:#374151;background:#fff8e1;border:1.5px solid #ffe082;border-radius:8px;padding:10px 13px;margin-bottom:12px">
+      💡 AI가 틀리는 이유는 한 가지가 아닐 수 있습니다. 해당하는 것을 모두 골라보세요.
+    </div>
+    <div class="cause-list" id="q5causes">
+      <div class="cause-item" onclick="toggleCause(this)" data-correct="false">
+        <div class="ck"></div>
+        <div class="cause-text">① AI가 초록색 음식은 모두 같다고 배웠습니다.</div>
+      </div>
+      <div class="cause-item" onclick="toggleCause(this)" data-correct="true">
+        <div class="ck"></div>
+        <div class="cause-text">② AI에게 보여준 사진이 학습할 때 사용한 사진과 너무 달랐습니다.</div>
+      </div>
+      <div class="cause-item" onclick="toggleCause(this)" data-correct="true">
+        <div class="ck"></div>
+        <div class="cause-text">③ AI는 "모르겠어요"라고 말할 수 없어서, 배운 것 중 가장 비슷한 답을 골랐습니다.</div>
+      </div>
+      <div class="cause-item" onclick="toggleCause(this)" data-correct="false">
+        <div class="ck"></div>
+        <div class="cause-text">④ 미역줄기볶음 이름표가 잘못 붙어 있었습니다.</div>
+      </div>
+      <div class="cause-item" onclick="toggleCause(this)" data-correct="false">
+        <div class="ck"></div>
+        <div class="cause-text">⑤ AI 카메라가 고장났습니다.</div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="act-btn act-confirm" id="q5confirm" onclick="submitQ5()">확인하기</button>
+      <button class="act-btn act-retry" id="q5retry" onclick="resetQ5()">다시 해보기</button>
+    </div>
+    <div class="fb" id="q5fb"></div>
+    <div class="btn-row"><button class="btn btn-p" id="q5next" disabled onclick="showDone()">다음 →</button></div>
+  </div>
+</div>
+
+<!-- 문항 6 -->
+</main>
+<script>
+
+const scores={q5:0,q6:0,q7:0};
+const MCQ_DONE={q7:false};
+let q5done=false,q6done=false,q6sel={};
+
+function go(n){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sc-'+n).classList.add('active');
+  const pct={5:0,6:33,7:66,8:100}[n]||0;
+  document.getElementById('progFill').style.width=pct+'%';
+  document.getElementById('stepLbl').textContent=n>=8?'완료':'문항 '+n;
+  window.scrollTo(0,0);
+  if(n===6) initQ6();
+  if(n===8) showFinal();
+}
+
+/* 선다형 공통 */
+function selOpt(btn,id,correct){
+  if(MCQ_DONE[id]) return;
+  MCQ_DONE[id]=true;
+  setTimeout(()=>{
+    document.querySelectorAll('#'+id+'opts .opt').forEach(b=>{
+      if(b===btn) b.classList.add(correct?'correct':'wrong');
+      if(!correct && b.getAttribute('onclick') && b.getAttribute('onclick').includes(',true)'))
+        b.classList.add('correct');
+    });
+    scores[id]=correct?1:0;
+    const fb=document.getElementById(id+'fb');
+    fb.className=correct?'fb ok show':'fb fail show';
+    fb.textContent=correct?'✅ 맞았습니다!':'틀렸습니다. 초록색이 정답입니다.';
+    document.getElementById(id+'next').disabled=false;
+  },200);
+}
+
+/* 문항 5 */
+function toggleCause(el){
+  if(q5done) return;
+  el.classList.toggle('checked');
+  el.querySelector('.ck').textContent=el.classList.contains('checked')?'✓':'';
+}
+function submitQ5(){
+  if(q5done) return;
+  q5done=true;
+  const items=document.querySelectorAll('#q5causes .cause-item');
+  let correct=0;
+  items.forEach(item=>{
+    const should=item.dataset.correct==='true';
+    const is=item.classList.contains('checked');
+    item.classList.remove('checked');
+    item.querySelector('.ck').textContent='';
+    if(should&&is){item.classList.add('r-correct');correct++;}
+    else if(should&&!is) item.classList.add('r-missed');
+    else if(!should&&is) item.classList.add('r-over');
+  });
+  scores.q5=correct===2?1:0;
+  const fb=document.getElementById('q5fb');
+  fb.className=correct===2?'fb ok show':'fb fail show';
+  fb.textContent=correct===2
+    ?'✅ 맞았습니다! AI가 틀리는 이유는 한 가지가 아닙니다.'
+    :'다시 살펴봐요. 초록색이 정답, 빨간색은 고르지 않은 정답, 주황색은 틀린 선택입니다.';
+  document.getElementById('q5confirm').style.display='none';
+  document.getElementById('q5retry').style.display='block';
+  document.getElementById('q5next').disabled=false;
+}
+function resetQ5(){
+  q5done=false; scores.q5=0;
+  document.querySelectorAll('#q5causes .cause-item').forEach(item=>{
+    item.classList.remove('checked','r-correct','r-missed','r-over');
+    item.querySelector('.ck').textContent='';
+  });
+  document.getElementById('q5fb').className='fb';
+  document.getElementById('q5confirm').style.display='block';
+  document.getElementById('q5retry').style.display='none';
+  document.getElementById('q5next').disabled=true;
+}
+
+/* 문항 6 */
+const PHOTOS=[
+  {id:0,icon:'👦🍱',desc:'학생 얼굴이 찍힌 사진',ans:'del',tag:'얼굴 노출 (개인정보 보호)'},
+  {id:1,icon:'🥬🍱',desc:'음식만 선명하게 찍힌 식판',ans:'ok',tag:'사용 가능'},
+  {id:2,icon:'🌐🍱',desc:'인터넷에서 내려받은 급식 사진',ans:'del',tag:'저작권 존중 필요'},
+  {id:3,icon:'🍚🍱',desc:'밥과 반찬이 잘 보이는 정면 사진',ans:'ok',tag:'사용 가능'},
+  {id:4,icon:'🏷️🍱',desc:'이름표(김지수)가 보이는 사진',ans:'del',tag:'이름 노출 (개인정보 보호)'},
+  {id:5,icon:'🥘🍱',desc:'반찬이 선명하고 흔들림 없는 사진',ans:'ok',tag:'사용 가능'},
+  {id:6,icon:'✂️🍱',desc:'특정 반찬만 가득 찍힌 사진',ans:'del',tag:'편향 자료 (공정성)'},
+  {id:7,icon:'🥕🍱',desc:'각도가 좋고 선명한 반찬 사진',ans:'ok',tag:'사용 가능'},
+];
+function initQ6(){
+  const grid=document.getElementById('photoGrid');
+  if(grid.children.length>0) return;
+  PHOTOS.forEach(p=>{
+    q6sel[p.id]=null;
+    const div=document.createElement('div');
+    div.className='ph-card'; div.id='ph-'+p.id;
+    div.innerHTML=`<span class="ph-icon">${p.icon}</span><div class="ph-num">사진 ${p.id+1}</div><div class="ph-desc">${p.desc}</div><div class="ph-btns"><button class="ph-btn ok-b" id="phok-${p.id}" onclick="selPh(${p.id},'ok')">사용 ✓</button><button class="ph-btn del-b" id="phdel-${p.id}" onclick="selPh(${p.id},'del')">삭제 ✗</button></div><span class="ph-tag" id="phtag-${p.id}"></span>`;
+    grid.appendChild(div);
+  });
+}
+function selPh(id,val){
+  if(q6done) return;
+  q6sel[id]=val;
+  document.getElementById('phok-'+id).className='ph-btn ok-b'+(val==='ok'?' act-ok':'');
+  document.getElementById('phdel-'+id).className='ph-btn del-b'+(val==='del'?' act-del':'');
+}
+function submitQ6(){
+  if(q6done) return;
+  if(!PHOTOS.every(p=>q6sel[p.id]!==null)){
+    const fb=document.getElementById('q6fb');
+    fb.className='fb fail show';
+    fb.textContent='⚠ 아직 선택하지 않은 사진이 있습니다.';
+    return;
+  }
+  q6done=true;
+  let correct=0;
+  PHOTOS.forEach(p=>{
+    const card=document.getElementById('ph-'+p.id);
+    const tag=document.getElementById('phtag-'+p.id);
+    document.getElementById('phok-'+p.id).disabled=true;
+    document.getElementById('phdel-'+p.id).disabled=true;
+    tag.textContent=p.tag;
+    if(q6sel[p.id]===p.ans){
+      card.classList.add(p.ans==='ok'?'r-ok':'r-del');
+      tag.className='ph-tag show '+(p.ans==='ok'?'t-ok':'t-del');
+      correct++;
+    } else {
+      card.classList.add('r-wrong');
+      tag.className='ph-tag show t-del';
+    }
+  });
+  scores.q6=correct===8?1:0;
+  const fb=document.getElementById('q6fb');
+  fb.className=correct===8?'fb ok show':'fb fail show';
+  fb.textContent=correct===8?'✅ 8장 모두 맞았습니다!':`${correct}/8 맞았습니다. 주황색을 다시 확인해 보세요.`;
+  document.getElementById('q6confirm').style.display='none';
+  document.getElementById('q6retry').style.display='block';
+  document.getElementById('q6next').disabled=false;
+}
+function resetQ6(){
+  q6done=false; scores.q6=0; q6sel={};
+  PHOTOS.forEach(p=>{
+    q6sel[p.id]=null;
+    document.getElementById('ph-'+p.id).className='ph-card';
+    const ok=document.getElementById('phok-'+p.id);
+    const del=document.getElementById('phdel-'+p.id);
+    ok.className='ph-btn ok-b'; ok.disabled=false;
+    del.className='ph-btn del-b'; del.disabled=false;
+    document.getElementById('phtag-'+p.id).className='ph-tag';
+  });
+  document.getElementById('q6fb').className='fb';
+  document.getElementById('q6confirm').style.display='block';
+  document.getElementById('q6retry').style.display='none';
+  document.getElementById('q6next').disabled=true;
+}
+
+/* 결과 */
+function showFinal(){
+  const total=scores.q5+scores.q6+scores.q7;
+  document.getElementById('finalScore').textContent=total;
+  document.getElementById('b5').textContent=scores.q5+'/1';
+  document.getElementById('b6').textContent=scores.q6+'/1';
+  document.getElementById('b7').textContent=scores.q7+'/1';
+  document.getElementById('trophy').textContent=total===3?'🏆':total===2?'🥈':'🌱';
+}
+
+function showDone(){var b=document.getElementById('q5next');b.textContent='✅ 완료!';b.disabled=true;}
+</script>
+</body>
+</html>
